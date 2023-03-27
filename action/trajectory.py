@@ -24,7 +24,6 @@ class curve(nn.Module):
 
         return jnp.concatenate([self.y_0, self.curve, self.y_1])
 
-
 class curve_2d(nn.Module):
 
     N: int
@@ -44,7 +43,6 @@ class curve_2d(nn.Module):
 
         return jnp.concatenate([self.y_0, self.curve, self.y_1, self.y_1])
 
-
 def solver_init(y_0, y_1, T, N, sol, sigma):
 
     (x, ya), (x, yb) = ns.pendulum_bvp(y_0, y_1, T, N)
@@ -61,7 +59,6 @@ def solver_init(y_0, y_1, T, N, sol, sigma):
             return yb + jax.random.normal(key, shape=yb.shape)*sigma
         return init
 
-
 def init_linear(y_0, y_1, N):
 
     def linear_init(key, shape):
@@ -72,9 +69,6 @@ def init_linear(y_0, y_1, N):
                         ]
                         ).T
     return linear_init
-
-
-
 
 
 if __name__=="__main__":

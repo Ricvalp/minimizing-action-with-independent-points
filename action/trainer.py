@@ -7,16 +7,19 @@ import optax
 import wandb
 from action.numerical_solver_bvp import pendulum_bvp
 
+
 class TrainerModule:
 
     def __init__(self, 
                  x: nn.Module,
+                 g,
                  cfg,
                  lr=1e-4,
                  seed=43,
                  ):
 
         self.x = x
+        self.g = g
         self.dt = cfg.dt
         self.lr = lr
         self.seed = seed
@@ -33,7 +36,7 @@ class TrainerModule:
 
         def train_step(state):
 
-            loss_fn = lambda params: action(self.x, params, self.dt)
+            loss_fn = lambda params: action(self.x, params, self.g, self.dt)
             loss, grads = jax.value_and_grad(loss_fn)(state.params)
             state = state.apply_gradients(grads=grads)
             return state, loss
@@ -72,7 +75,7 @@ class TrainerModule:
             #     plt.plot(self.t[:, 0], tr[:, 0], color='b', label='nef action minimization')
             #     plt.legend()
             #     wandb.log({"loss": loss, "plot": plt})
-            
+
             # elif self.wandb_log:
             #     wandb.log({"loss": loss})
 
@@ -81,17 +84,19 @@ class TrainerModule:
     # def init_ground_truth(self, y_0, y_1, T, N):
     #     (self.t_gt, self.y_plot_a), (self.t_gt, self.y_plot_b) = pendulum_bvp(y_0=y_0, y_1=y_1, T=T, N=N)
 
-def action(x, params, dt):
 
-    q = x.apply({'params': params})
-    q_dot = (q[1:]-q[:-1])/dt
 
-    actn = lagrangian(q[1:], q_dot)
 
-    assert True
+# def action(x, params, dt):
 
-    return actn.mean()
+#     q = x.apply({'params': params})
+#     q_dot = (q[1:]-q[:-1])/dt
 
+#     actn = lagrangian(q[1:], q_dot)
+
+#     assert True
+
+#     return actn.mean()
 
 # def lagrangian_single_point(q, q_dot):
 
@@ -102,17 +107,27 @@ def action(x, params, dt):
 # lagrangian = jax.vmap(lagrangian_single_point, (0,0), 0)
 
 
-def g(q):
 
-    return jnp.array([[1, -0.98], [-0.98, 1]])
+def action(x, params, g, dt):
 
-def lagrangian_single_point(q, q_dot):
+    q = x.apply({'params': params})
+    # q = x.apply({'params': params}, t)
 
-    K = q_dot @ jnp.identity(2) @ q_dot.T
+    q_dot = (q[1:]-q[:-1])/dt
 
-    return K
-lagrangian = jax.vmap(lagrangian_single_point, (0,0), 0)
+    # action = jnp.sqrt((q_dot[:, None, :]@g(q)[:-1]@q_dot[:, :, None]).squeeze(-1))
 
+    # I don't use the square root because its extremals are also extremals of the folloing functional
+    action = (q_dot[:, None, :]@g(q)[:-1]@q_dot[:, :, None]).squeeze(-1)
+
+    # # continuity regularizer
+    # lamb = 6.
+    # id = jnp.array([jnp.identity(2) for _ in range(q_dot.shape[0])])
+    # regularizer = (q_dot[:, None, :]@ id @q_dot[:, :, None]).squeeze(-1)
+
+    # assert True
+
+    return action.mean() # + lamb*regularizer.mean()
 
 
 
