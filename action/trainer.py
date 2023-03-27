@@ -30,7 +30,7 @@ class TrainerModule:
         #     self.init_ground_truth(y_0=cfg.y_0, y_1=cfg.y_1, T=cfg.N*cfg.dt, N=cfg.N)
 
     def create_functions(self):
-        
+
         def train_step(state):
 
             loss_fn = lambda params: action(self.x, params, self.dt)
@@ -81,7 +81,6 @@ class TrainerModule:
     # def init_ground_truth(self, y_0, y_1, T, N):
     #     (self.t_gt, self.y_plot_a), (self.t_gt, self.y_plot_b) = pendulum_bvp(y_0=y_0, y_1=y_1, T=T, N=N)
 
-
 def action(x, params, dt):
 
     q = x.apply({'params': params})
@@ -93,13 +92,28 @@ def action(x, params, dt):
 
     return actn.mean()
 
+
+# def lagrangian_single_point(q, q_dot):
+
+#     K = 0.5 * q_dot @ jnp.identity(2) @ q_dot.T
+#     V = -1/(q @ q.T)**2
+
+#     return K - V
+# lagrangian = jax.vmap(lagrangian_single_point, (0,0), 0)
+
+
+def g(q):
+
+    return jnp.array([[1, -0.98], [-0.98, 1]])
+
 def lagrangian_single_point(q, q_dot):
 
-    K = 0.5 * q_dot @ jnp.identity(2) @ q_dot.T
-    V = -1/(q @ q.T)**2
+    K = q_dot @ jnp.identity(2) @ q_dot.T
 
-    return K - V
+    return K
 lagrangian = jax.vmap(lagrangian_single_point, (0,0), 0)
+
+
 
 
 if __name__=="__main__":

@@ -29,6 +29,7 @@ def main(cfg):
     # plt.plot(x, y_plot_a, color='r', label='svb solution 1')
     # plt.plot(x, y_plot_b, color='g', label='svb solution 2')
     # plt.plot(x, y_plot_c, color='y', label= 'ivp solver')
+    
     plt.scatter(tr[:, 0], tr[:, 1], color='b', label='action minimization')
     plt.legend()
     plt.show()
